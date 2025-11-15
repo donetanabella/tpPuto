@@ -1,0 +1,14 @@
+### Token for usuario1
+
+POST http://localhost:8083/realms/tpi-backend/protocol/openid-connect/token HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=tpi-backend-client&username=admin01&password=clave123
+
+
+### Token for admin1
+
+POST http://localhost:8081/realms/bda-realm/protocol/openid-connect/token HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=bda-client&username=admin1&password=admin123
