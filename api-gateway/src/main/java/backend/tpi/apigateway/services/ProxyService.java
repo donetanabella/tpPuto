@@ -40,8 +40,15 @@ public class ProxyService {
 
         log.info("➡️ Redirigiendo [{}] a {}", method, targetUrl);
 
-        var request = client.method(HttpMethod.valueOf(method))
-                .uri(targetUrl);
+				var request = client
+								.method(HttpMethod.valueOf(method))
+								.uri(targetUrl)
+								.headers(httpHeaders -> {
+									String auth = headers.get("authorization");
+									if (auth != null) {
+										httpHeaders.add("Authorization", auth);
+									}
+								});
 
         if (body != null && !body.isEmpty()) {
             request.body(body);
