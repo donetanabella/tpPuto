@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import backend.tpi.gestiondesolicitudes.domain.Solicitud;
 import backend.tpi.gestiondesolicitudes.services.SolicitudService;
@@ -41,6 +42,7 @@ public class SolicitudController {
 
     // GET /api/v1/solicitudes
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','CLIENTE')")
     public ResponseEntity<List<Solicitud>> obtenerTodasSolicitudes() {
 
         List<Solicitud> solicitudesEncontradas = solicitudService.listarTodos();
@@ -53,6 +55,7 @@ public class SolicitudController {
 
     // GET /api/v1/solicitudes/{id}
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','CLIENTE')")
     public ResponseEntity<Solicitud> obtenerSolicitudPorId(@PathVariable("id") Integer id) {
         Optional<Solicitud> solicitudEncontrada = solicitudService.buscarPorId(id);
         return solicitudEncontrada.map(ResponseEntity::ok)
@@ -62,6 +65,7 @@ public class SolicitudController {
     // GET /api/v1/solicitudes/{id}/estad
     // Obtiene el estado de una solicitud por el ID de la solicitud
     @GetMapping("/{id}/estado")
+    @PreAuthorize("hasAnyRole('ADMIN','CLIENTE')")
     public ResponseEntity<Map<String, Object>> obtenerEstadoPorIdSolicitud(@PathVariable Integer id) {
         var solicitudOpt = solicitudService.buscarPorId(id);
         if (solicitudOpt.isEmpty()) {
@@ -76,6 +80,7 @@ public class SolicitudController {
 
     // POST /api/v1/solicitudes
     @PostMapping
+    @PreAuthorize("hasRole('CLIENTE')")
     public ResponseEntity<Solicitud> crearSolicitud(@Valid @RequestBody Solicitud nuevaSolicitud) {
         Solicitud solicitudCreada = solicitudService.guardar(nuevaSolicitud);
         if (solicitudCreada != null) {
@@ -87,8 +92,9 @@ public class SolicitudController {
 
     // PUT /api/v1/solicitudes/{id}
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','CLIENTE')")
     public ResponseEntity<Solicitud> modificarSolicitud(@PathVariable("id") Integer id,
-            @Valid @RequestBody Solicitud solicitudActualizar) {
+        @Valid @RequestBody Solicitud solicitudActualizar) {
         Optional<Solicitud> solicitudActualizada = solicitudService.modificar(id, solicitudActualizar);
         return solicitudActualizada.map(c -> ResponseEntity.status(HttpStatus.OK).body(c))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
@@ -96,6 +102,7 @@ public class SolicitudController {
 
     // DELETE /api/v1/solicitudes/{id}
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> borrarSolicitud(@PathVariable("id") Integer id) {
         boolean encontrada = solicitudService.existe(id);
         if (encontrada) {
@@ -108,6 +115,7 @@ public class SolicitudController {
 
     // GET costo aprox
     @GetMapping("/{id}/costo-aprox")
+    @PreAuthorize("hasAnyRole('ADMIN','CLIENTE')")
     public ResponseEntity<BigDecimal> obtenerCostoAprox(@PathVariable("id") Integer id) {
         BigDecimal costoAprox = solicitudService.obtenerCostoAprox(id);
         if (costoAprox != null) {
@@ -119,6 +127,7 @@ public class SolicitudController {
 
     // GET costo final
     @GetMapping("/{id}/costo-final")
+    @PreAuthorize("hasAnyRole('ADMIN','CLIENTE')")
     public ResponseEntity<BigDecimal> obtenerCostoFinal(@PathVariable("id") Integer id) {
         BigDecimal costoFinal = solicitudService.obtenerCostoFinal(id);
         if (costoFinal != null) {
@@ -129,6 +138,20 @@ public class SolicitudController {
     }
 
     // GET rutas posibles
+    // GET rutas posibles
+    @GetMapping("/{id}/rutas-posibles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String,Object>> obtenerRutasPosibles(@PathVariable("id") Integer id) {
+        // TODO: implement logic. For now, return 501 Not Implemented as a placeholder.
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(Map.of("message", "Not implemented"));
+    }
+
     // PUT asignar posible ruta
+    @PutMapping("/{id}/asignar-ruta")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String,Object>> asignarRuta(@PathVariable("id") Integer id, @RequestBody Map<String,Object> body) {
+        // TODO: implement logic. For now, return 501 Not Implemented as a placeholder.
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(Map.of("message", "Not implemented"));
+    }
 
 }

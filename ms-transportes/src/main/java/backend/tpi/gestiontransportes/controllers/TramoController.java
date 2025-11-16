@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import backend.tpi.gestiontransportes.domain.Camion;
@@ -34,6 +35,7 @@ public class TramoController {
 
     // GET /api/v1/tramos
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','TRANSPORTISTA')")
     public ResponseEntity<List<Tramo>> obtenerTodos() {
         List<Tramo> lista = tramoService.listarTodos();
         if (lista.isEmpty()) return ResponseEntity.noContent().build();
@@ -50,6 +52,7 @@ public class TramoController {
 
     // POST /api/v1/tramos
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Tramo> crear(@Valid @RequestBody Tramo nuevo) {
         Tramo guardado = tramoService.guardar(nuevo);
         return ResponseEntity.status(HttpStatus.CREATED).body(guardado);
@@ -57,6 +60,7 @@ public class TramoController {
 
     // PUT /api/v1/tramos/{id}
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Tramo> actualizar(@PathVariable("id") Integer id,
                                             @Valid @RequestBody Tramo actualizado) {
         Optional<Tramo> res = tramoService.modificar(id, actualizado);
@@ -66,6 +70,7 @@ public class TramoController {
 
     // DELETE /api/v1/tramos/{id}
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> borrar(@PathVariable("id") Integer id) {
         if (tramoService.existe(id)) {
             tramoService.eliminarPorId(id);
@@ -75,6 +80,7 @@ public class TramoController {
     }
 
     @GetMapping("{idTramo}/asignar-camion/{idCamion}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Tramo> asignarCamion(@PathVariable("idCamion") Integer idCamion, @PathVariable("idTramo") Integer idTramo) {
         
         Optional<Tramo> tramoOpt = tramoService.buscarPorId(idTramo);
@@ -96,6 +102,7 @@ public class TramoController {
     }
 
     @GetMapping("{idTramo}/inicio")
+    @PreAuthorize("hasRole('TRANSPORTISTA')")
     public ResponseEntity<Tramo> asignarInicio(@PathVariable Integer idTramo) {
 
         Optional<Tramo> tramoOpt = tramoService.buscarPorId(idTramo);
@@ -130,6 +137,7 @@ public class TramoController {
     }
 
     @GetMapping("{idTramo}/fin")
+    @PreAuthorize("hasRole('TRANSPORTISTA')")
     public ResponseEntity<Tramo> asignarFin(@PathVariable Integer idTramo) {
 
         Optional<Tramo> tramoOpt = tramoService.buscarPorId(idTramo);
@@ -169,5 +177,20 @@ public class TramoController {
                  .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
+    // GET /api/v1/tramos/{id}/costo-aproximado
+    @GetMapping("{idTramo}/costo-aproximado")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<java.util.Map<String, Object>> obtenerCostoAproximado(@PathVariable Integer idTramo) {
+        // Stub endpoint - to be implemented
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    }
+
+    // GET /api/v1/tramos/{id}/costo-final
+    @GetMapping("{idTramo}/costo-final")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<java.util.Map<String, Object>> obtenerCostoFinal(@PathVariable Integer idTramo) {
+        // Stub endpoint - to be implemented
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    }
 }
 

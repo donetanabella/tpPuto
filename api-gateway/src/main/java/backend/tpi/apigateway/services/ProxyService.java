@@ -44,14 +44,27 @@ public class ProxyService {
 								.method(HttpMethod.valueOf(method))
 								.uri(targetUrl)
                                 .headers(httpHeaders -> {
-                                    // Support case-insensitive header lookup: some frameworks provide 'Authorization' capitalized
+                                    // Support case-insensitive header lookup: some frameworks provide capitalized header names
                                     String auth = headers.getOrDefault("authorization", headers.get("Authorization"));
-                                    // Log whether the incoming request had an Authorization header (for debugging token relay)
                                     if (auth != null) {
                                         log.debug("ProxyService: incoming Authorization header present (truncated): {}", auth.length() > 20 ? auth.substring(0,20) + "..." : auth);
                                         httpHeaders.add("Authorization", auth);
                                     } else {
                                         log.debug("ProxyService: no Authorization header found in incoming request headers: keys={}", headers.keySet());
+                                    }
+
+                                    // Forward Content-Type if present (important for POST/PUT JSON bodies)
+                                    String contentType = headers.getOrDefault("content-type", headers.get("Content-Type"));
+                                    if (contentType != null) {
+                                        log.debug("ProxyService: forwarding Content-Type: {}", contentType);
+                                        httpHeaders.add("Content-Type", contentType);
+                                    }
+
+                                    // Forward Accept header when available
+                                    String accept = headers.getOrDefault("accept", headers.get("Accept"));
+                                    if (accept != null) {
+                                        log.debug("ProxyService: forwarding Accept: {}", accept);
+                                        httpHeaders.add("Accept", accept);
                                     }
                                 });
 

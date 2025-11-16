@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,6 +36,7 @@ public class TarifaController {
     // GET /api/v1/tarifas
     // GET /api/v1/tarifas?volumen=100 deberia devolver la tarifa para la cual el volumen esté dentro de su rango
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Tarifa>> obtenerTodasTarifas(@RequestParam(required = false) BigDecimal volumen) {
 
         List<Tarifa> tarifasEncontradas;
@@ -65,6 +67,7 @@ public class TarifaController {
 
     // POST /api/v1/tarifas
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Tarifa> crearTarifa(@Valid @RequestBody Tarifa tarifaNueva) {
         Tarifa tarifaCreada = tarifaService.guardar(tarifaNueva);
 
@@ -78,6 +81,7 @@ public class TarifaController {
 
     // PUT /api/v1/tarifas/{id}
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Tarifa> modificarTarifa(@PathVariable("id") Integer id, @Valid @RequestBody Tarifa tarifaActualizar) {
         Optional<Tarifa> tarifaActualizada = tarifaService.modificar(id, tarifaActualizar);
         return tarifaActualizada.map(c -> ResponseEntity.status(HttpStatus.OK).body(c)).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
@@ -85,6 +89,7 @@ public class TarifaController {
 
     // DELETE /api/v1/tarifas/{id}
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> borrarTarifa(@PathVariable("id") Integer id) {
         boolean encontrada = tarifaService.existe(id);
         if (encontrada) {
@@ -94,5 +99,13 @@ public class TarifaController {
         else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    // PUT /api/v1/tarifas/{id}/deshabilitar
+    @PutMapping("/{id}/deshabilitar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deshabilitarTarifa(@PathVariable("id") Integer id) {
+        // Stub endpoint - to be implemented
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
     }
 }

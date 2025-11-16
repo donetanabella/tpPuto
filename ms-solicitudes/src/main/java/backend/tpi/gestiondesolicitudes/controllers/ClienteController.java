@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,6 +31,7 @@ public class ClienteController {
 
     // GET /api/v1/clientes
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Cliente>> obtenerTodosClientes() {
         
         List<Cliente> clientesEncontrados = clienteService.listarTodos();
@@ -44,6 +46,7 @@ public class ClienteController {
     }
 
     // GET /api/v1/clientes/{id}
+    @PreAuthorize("hasRole('ADMIN', 'CLIENTE')")
     @GetMapping("/{id}")
     public ResponseEntity<Cliente> obtenerClientePorId(@PathVariable("id") Integer id) {
         Optional<Cliente> clienteEncontrado = clienteService.buscarPorId(id);
@@ -52,6 +55,7 @@ public class ClienteController {
     
     // POST /api/v1/clientes
     @PostMapping
+    @PreAuthorize("hasRole('CLIENTE')")
     public ResponseEntity<Cliente> crearCliente(@Valid @RequestBody Cliente clienteNuevo) {
         Cliente clienteGuardado = clienteService.guardar(clienteNuevo);
         return ResponseEntity.status(HttpStatus.CREATED).body(clienteGuardado);
@@ -59,6 +63,7 @@ public class ClienteController {
 
     // PUT /api/v1/clientes/{id}
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('CLIENTE')")
     public ResponseEntity<Cliente> actualizarCliente(@PathVariable("id") Integer id, @RequestBody Cliente nuevoCliente) {
 
         Optional<Cliente> clienteActualizado = clienteService.modificar(id, nuevoCliente);
@@ -68,6 +73,7 @@ public class ClienteController {
 
     // DELETE /api/v1/clientes/{id}
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> eliminarCliente(@PathVariable("id") Integer id) {
         // Verificar existencia
         Optional<Cliente> existente = clienteService.buscarPorId(id);

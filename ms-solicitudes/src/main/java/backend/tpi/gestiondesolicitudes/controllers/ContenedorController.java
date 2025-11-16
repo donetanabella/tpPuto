@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +32,7 @@ public class ContenedorController {
 
     // GET /api/v1/contenedores
     @GetMapping()
+    @PreAuthorize("hasAnyRole('ADMIN','CLIENTE')")
     public ResponseEntity<List<Contenedor>> obtenerTodosContenedores() {
 
         List<Contenedor> contenedoresEncontrados = contenedorService.listarTodos();
@@ -68,6 +70,7 @@ public class ContenedorController {
 
     // POST /api/v1/contenedores
     @PostMapping()
+    @PreAuthorize("hasRole('CLIENTE')")
     public ResponseEntity<Contenedor> crearContenedor(@Valid @RequestBody Contenedor nuevoContenedor) {
         Optional<Contenedor> contenedorCreado = contenedorService.guardar(nuevoContenedor);
 
@@ -78,6 +81,7 @@ public class ContenedorController {
 
     // PUT /api/v1/contenedores/{id}
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Contenedor> modificarContenedor(@PathVariable("id") Integer id,
             @Valid @RequestBody Contenedor contenedorActualizar) {
         Optional<Contenedor> contenedorActualizado = contenedorService.modificar(id, contenedorActualizar);
@@ -88,6 +92,7 @@ public class ContenedorController {
 
     // DELETE /api/v1/contenedores/{id}
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> borrarContenedor(@PathVariable Integer id) {
         boolean encontrado = contenedorService.existe(id);
         if (encontrado) {
