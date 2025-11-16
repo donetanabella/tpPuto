@@ -11,18 +11,18 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
+
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-@EnableWebSecurity
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
@@ -30,7 +30,8 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/v3/api-docs/**",
-                    "/webjars/**"
+                    "/webjars/**",
+                    "/actuator/health/**"
                 ).permitAll()
                 .requestMatchers("/api/v1/**").authenticated()
                 .anyRequest().permitAll()
@@ -42,17 +43,42 @@ public class SecurityConfig {
     }
 
     @Bean
-    Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter() {
+    public Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter() {
         return jwt -> {
-            Map<String, List<String>> realmAccess = jwt.getClaim("realm_access");
-            List<String> roles = realmAccess != null ?
-                    realmAccess.getOrDefault("roles", List.of()) : List.of();
-
-            List<SimpleGrantedAuthority> authorities =
-                    roles.stream()
-                         .map(r -> "ROLE_" + r.toUpperCase())
-                         .map(SimpleGrantedAuthority::new)
-                         .toList();
+            Collection<GrantedAuthority> authorities = new ArrayList<>();
+            
+            // Extract roles from realm_access claim
+            Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+            if (realmAccess != null && realmAccess.containsKey("roles")) {
+                Object rolesObj = realmAccess.get("roles");
+                if (rolesObj instanceof Collection<?>) {
+                    Collection<?> rolesList = (Collection<?>) rolesObj;
+                    rolesList.forEach(role -> {
+                        if (role instanceof String) {
+                            authorities.add(new SimpleGrantedAuthority("ROLE_" + ((String) role).toUpperCase()));
+                        }
+                    });
+                }
+            }
+            
+            // Extract roles from resource_access claim if available
+            Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
+            if (resourceAccess != null) {
+                resourceAccess.forEach((key, value) -> {
+                    if (value instanceof Map<?, ?>) {
+                        Map<?, ?> resource = (Map<?, ?>) value;
+                        Object rolesObj = resource.get("roles");
+                        if (rolesObj instanceof Collection<?>) {
+                            Collection<?> rolesList = (Collection<?>) rolesObj;
+                            rolesList.forEach(role -> {
+                                if (role instanceof String) {
+                                    authorities.add(new SimpleGrantedAuthority("ROLE_" + ((String) role).toUpperCase()));
+                                }
+                            });
+                        }
+                    }
+                });
+            }
 
             return new JwtAuthenticationToken(jwt, authorities);
         };

@@ -43,12 +43,17 @@ public class ProxyService {
 				var request = client
 								.method(HttpMethod.valueOf(method))
 								.uri(targetUrl)
-								.headers(httpHeaders -> {
-									String auth = headers.get("authorization");
-									if (auth != null) {
-										httpHeaders.add("Authorization", auth);
-									}
-								});
+                                .headers(httpHeaders -> {
+                                    // Support case-insensitive header lookup: some frameworks provide 'Authorization' capitalized
+                                    String auth = headers.getOrDefault("authorization", headers.get("Authorization"));
+                                    // Log whether the incoming request had an Authorization header (for debugging token relay)
+                                    if (auth != null) {
+                                        log.debug("ProxyService: incoming Authorization header present (truncated): {}", auth.length() > 20 ? auth.substring(0,20) + "..." : auth);
+                                        httpHeaders.add("Authorization", auth);
+                                    } else {
+                                        log.debug("ProxyService: no Authorization header found in incoming request headers: keys={}", headers.keySet());
+                                    }
+                                });
 
         if (body != null && !body.isEmpty()) {
             request.body(body);

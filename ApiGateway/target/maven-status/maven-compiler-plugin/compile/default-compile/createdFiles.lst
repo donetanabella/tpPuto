@@ -1,0 +1,5 @@
+backend/tpi/apigateway/config/RestClientConfig.class
+backend/tpi/apigateway/ApiGatewayApplication.class
+backend/tpi/apigateway/controllers/GatewayController.class
+backend/tpi/apigateway/services/ProxyService.class
+backend/tpi/apigateway/config/SecurityConfig.class
