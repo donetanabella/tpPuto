@@ -6,6 +6,9 @@ import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,11 +49,34 @@ public class ClienteController {
     }
 
     // GET /api/v1/clientes/{id}
-    @PreAuthorize("hasRole('ADMIN', 'CLIENTE')")
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','CLIENTE')")
     public ResponseEntity<Cliente> obtenerClientePorId(@PathVariable("id") Integer id) {
+        // Verificar si el cliente existe
         Optional<Cliente> clienteEncontrado = clienteService.buscarPorId(id);
-        return clienteEncontrado.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        if (clienteEncontrado.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        // Validar ownership: si es CLIENTE, solo puede acceder a sus propios datos
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
+            boolean isAdmin = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+            if (!isAdmin) {
+                // Es CLIENTE, verificar que sea dueño del registro
+                String emailFromJwt = jwt.getClaimAsString("email");
+                String emailCliente = clienteEncontrado.get().getEmail();
+
+                if (emailFromJwt == null || !emailFromJwt.equals(emailCliente)) {
+                    // No es el dueño, denegar acceso
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+            }
+        }
+
+        return ResponseEntity.ok(clienteEncontrado.get());
     }
     
     // POST /api/v1/clientes
@@ -63,12 +89,35 @@ public class ClienteController {
 
     // PUT /api/v1/clientes/{id}
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('CLIENTE')")
+    @PreAuthorize("hasAnyRole('ADMIN','CLIENTE')")
     public ResponseEntity<Cliente> actualizarCliente(@PathVariable("id") Integer id, @RequestBody Cliente nuevoCliente) {
+        // Verificar si el cliente existe
+        Optional<Cliente> clienteExistente = clienteService.buscarPorId(id);
+        if (clienteExistente.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        // Validar ownership: si es CLIENTE, solo puede actualizar sus propios datos
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
+            boolean isAdmin = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+            if (!isAdmin) {
+                // Es CLIENTE, verificar que sea dueño del registro
+                String emailFromJwt = jwt.getClaimAsString("email");
+                String emailCliente = clienteExistente.get().getEmail();
+
+                if (emailFromJwt == null || !emailFromJwt.equals(emailCliente)) {
+                    // No es el dueño, denegar acceso
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+            }
+        }
 
         Optional<Cliente> clienteActualizado = clienteService.modificar(id, nuevoCliente);
-
-        return clienteActualizado.map(c -> ResponseEntity.status(HttpStatus.OK).body(c)).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        return clienteActualizado.map(c -> ResponseEntity.status(HttpStatus.OK).body(c))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     // DELETE /api/v1/clientes/{id}
